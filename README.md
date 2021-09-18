@@ -28,7 +28,8 @@ Multiple models were trained with varying the threshold ∈ [0.5, 0.6, 0.7, 0.8,
 <br><br> Note that there is an initial dip in the performance of all the models before rising. One possible explaination could be the way the model learns. The model could have learnt to classify via 2 different features:
 1. Based on colour - Classiying based on colour would be the easiest. Red-> class 0, Green-> class1. But due to the induced errors, this would not be the ideal solution
 2. Based on integers - Classying the images based on the pixel locations (the integers itself), which is compartively tough, would be the ideal solution <br>
-To speculate, the model could have chosen the easier way at the begininig of classying by colour (local minima), but later realize that this is not the best solution and begins learning it based in the integers itself (global minima). <br><br>
+
+To speculate, the model could have chosen the easier way at the begininig of classying by colour (local minima), but later realize that this is not the best solution and begins learning it based in the integers itself (global minima). <br>
 
 Please note that there are a few implementation differences from the paper, optimizers and learning rate to name a few. Though the hyperparameters vary, the core idea is the same. <br> <br> 
 
