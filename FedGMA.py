@@ -1,7 +1,7 @@
 """
 Name: FedGMA.py
 Aim: A federated learning approach
-Author: C Siddarth
+Author: Siddarth C
 Date: September, 2021
 """
 
