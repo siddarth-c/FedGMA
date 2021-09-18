@@ -1,8 +1,8 @@
 # FedGMA
 
-**:exclamation: Disclaimer: This is not the official implementation of FedGMA** <br> <br>
+**:exclamation: Disclaimer :exclamation: This is not the official implementation of FedGMA** <br> <br>
 
-This work is inspired by the intuitive approach used in [Gradient-Masked Federated Learning](https://github.com/siddarth-c/FedGMA/blob/main/GRADIENT-MASKED%20FEDERATED%20OPTIMIZATION.pdf). FedGMA is a modified version of FedAvg that ensures better convergence of server model, especially in the case of NIID data.
+This work is inspired by the intuitive approach used in [Gradient-Masked Federated Learning](https://github.com/siddarth-c/FedGMA/blob/main/GRADIENT-MASKED%20FEDERATED%20OPTIMIZATION.pdf). FedGMA is a modified version of FedAvg that ensures better convergence of server model, especially in the case of NIID data. 
 
 - [Federated learning](#federated-learning)
 - [Dataset](#dataset)
@@ -15,18 +15,19 @@ Federated learning (also known as collaborative learning) is a machine learning 
 
 ![FL](FL.png)
 
-<br> FedAvg, or Federated Average, is one of such algorithms introduced by Google in 2017. It is the first ever FL algorithm, and achieved high-quality models using relatively few rounds of communication. For more info on FedAvg, refer to [Communication-Efficient Learning of Deep Networks from Decentralized Data](https://arxiv.org/pdf/1602.05629.pdf). FedGMA is a recently released FL algorithm that uses a AND-Masked gradient update along with parameter averaging to ensure update steps in the direction of the optimal minima across clients. 
+<br> FedAvg, or Federated Average, is one of such algorithms introduced by Google in 2017. It is the first ever FL algorithm, and serves as a baseline now for the new methods to beat. For more info on FedAvg, refer to [Communication-Efficient Learning of Deep Networks from Decentralized Data](https://arxiv.org/pdf/1602.05629.pdf). <br>
+FedGMA is an FL algorithm devised by the people at MILA. It uses an AND-Masked gradient update along with parameter averaging to ensure update steps in the direction of the optimal minima across clients. This ensures that the direction of gradient descent is similar to the majority of the participating clients.
 
 ## Dataset
-The authors of the paper use the [MNIST](http://yann.lecun.com/exdb/mnist/) dataset to test their proposed work. It contains 60,000 training images and 10,000 testing images. The numbers are color coded with a self-induced noise. For more info, refer to the FedGMA paper and section 5.2 in the paper [Invariant Risk Minimization
+The authors of the paper use the [MNIST](http://yann.lecun.com/exdb/mnist/) dataset to test their proposed work. It contains 60,000 training images and 10,000 testing images. The numbers are color coded with a self-induced noise. In the training set, the numbers below 5 are coloured with red, and the rest with green. This is inverted for the test set inorder to assess the generalization of the model. For more info, refer to the FedGMA paper and section 5.2 in the paper [Invariant Risk Minimization
 ](https://arxiv.org/pdf/1907.02893.pdf).
 
 ## Results and Observation
-Multiple models were trained with varying the threshold in [0.5, 0.6, 0.7, 0.8, 0.9]. The test accuracy was calculated at the end of every communication round and is reported below. Note that a probability threshold of 0.7 achieves the maximum accuracy at the end of 50 communication rounds. Indeed the accuracy of 0.7 model is consistantly higher than other models through out the graph. <br><br>
+Multiple models were trained with varying the threshold ∈ [0.5, 0.6, 0.7, 0.8, 0.9]. The test accuracy was calculated at the end of every communication round and is reported below. Note that a probability threshold of 0.7 achieves the maximum accuracy at the end of 50 communication rounds. Indeed the accuracy of 0.7 model is consistantly higher than other models through out the graph. <br><br>
 ![Accuracy plot](acc.png)
-<br><br> Note that there is an initial dip in the performance of all the models before rising. One possible explaination could be the way the model learns. The model could have learnt the classification via 2 different features:
-1. Based on colour - Classiying based on colour would be the easiest. But due to the induced errors, this would not be the ideal solution
-2. Based on integers - Classying the images based on the pixel locations, which is compartively tough, would be the ideal solution <br>
+<br><br> Note that there is an initial dip in the performance of all the models before rising. One possible explaination could be the way the model learns. The model could have learnt to classify via 2 different features:
+1. Based on colour - Classiying based on colour would be the easiest. Red-> class 0, Green-> class1. But due to the induced errors, this would not be the ideal solution
+2. Based on integers - Classying the images based on the pixel locations (the integers itself), which is compartively tough, would be the ideal solution <br>
 To speculate, the model could have chosen the easier way at the begininig of classying by colour (local minima), but later realize that this is not the best solution and begins learning it based in the integers itself (global minima). <br><br>
 
 Please note that there are a few implementation differences from the paper, optimizers and learning rate to name a few. Though the hyperparameters vary, the core idea is the same. <br> <br> 
