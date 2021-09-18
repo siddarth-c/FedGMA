@@ -1,7 +1,7 @@
 """
 Name: DataDistributor.py
 Aim: Convert MNIST data into binary classification data
-Author: C Siddarth
+Author: Siddarth C
 Date: September, 2021
 """
 
