@@ -16,7 +16,7 @@ Federated learning (also known as collaborative learning) is a machine learning 
 ![FL](FL.png)
 
 <br> FedAvg, or Federated Average, is one of such algorithms introduced by Google in 2017. It is the first ever FL algorithm, and serves as a baseline now for the new methods to beat. For more info on FedAvg, refer to [Communication-Efficient Learning of Deep Networks from Decentralized Data](https://arxiv.org/pdf/1602.05629.pdf). <br>
-FedGMA is an FL algorithm devised by the people at MILA. It uses an AND-Masked gradient update along with parameter averaging to ensure update steps in the direction of the optimal minima across clients. This ensures that the direction of gradient descent is similar to the majority of the participating clients.
+FedGMA is an FL algorithm devised by the people at MILA. It uses an AND-Masked gradient update along with parameter averaging to ensure update steps in the direction of the optimal minima across clients. This ensures that the direction of gradient descent is similar to the majority of the participating clients. Find my implementation [here])https://github.com/siddarth-c/FedGMA/blob/main/FedGMA.py)
 
 ## Dataset
 The authors of the paper use the [MNIST](http://yann.lecun.com/exdb/mnist/) dataset to test their proposed work. It contains 60,000 training images and 10,000 testing images. The numbers are color coded with a self-induced noise. In the training set, the numbers below 5 are coloured with red, and the rest with green. This is inverted for the test set inorder to assess the generalization of the model. For more info, refer to the FedGMA paper and section 5.2 in the paper [Invariant Risk Minimization
@@ -36,8 +36,31 @@ Please note that there are a few implementation differences from the paper, opti
 To run the code, follow the following steps:
 1. Download the MNIST data from [here](http://yann.lecun.com/exdb/mnist/)
 2. Extract the downloaded zip files into a new folder in the root directory titled 'samples'
-3. Download [DataDistributor.py](https://github.com/siddarth-c/FedGMA/blob/main/DataDistributor.py) in the root directoy and run it
-4. Download the [FedGMA.py](https://github.com/siddarth-c/FedGMA/blob/main/FedGMA.py) in the root directory and run it
+3. Download this repository as a zip from [here](https://github.com/siddarth-c/FedGMA/archive/refs/heads/main.zip) and extract the files. 
+4. Copy all the files in the directory 'working-directory/FedGMA-main/FedGMA-main/' to 'working-directory/'
+5. Install the required python packages using the command ```pip install -r requirements.txt```
+6. First run the DataDistributor.py file to generate training samples
+7. Next run the FedGMA.py to train the model and save the results
+   
+Your directory after step 4 should resemble the following:
+```
+working-directory/
+    acc.png
+    DataDistributor.py
+    dummy.py
+    FedGMA-main.zip
+    FedGMA.py
+    FL.png
+    GRADIENT-MASKED FEDERATED OPTIMIZATION.pdf
+    loss.png
+    README.md
+    requirements.txt
+    samples/
+        t10k-images-idx3-ubyte
+        t10k-labels-idx1-ubyte
+        train-images-idx3-ubyte
+        train-labels-idx1-ubyte
+```
 
 ## Citation
 ```
