@@ -2,7 +2,7 @@
 
 **:exclamation: Disclaimer :exclamation: This is not the official implementation of FedGMA** <br> <br>
 
-This work is inspired by the intuitive approach used in [Gradient-Masked Federated Learning](https://github.com/siddarth-c/FedGMA/blob/main/GRADIENT-MASKED%20FEDERATED%20OPTIMIZATION.pdf). FedGMA is a modified version of FedAvg that ensures better convergence of server model, especially in the case of NIID data. 
+This work is inspired by the intuitive approach used in [Gradient-Masked Federated Learning](https://github.com/siddarth-c/FedGMA/blob/main/Extras/GRADIENT-MASKED%20FEDERATED%20OPTIMIZATION.pdf). FedGMA is a modified version of FedAvg that ensures better convergence of server model, especially in the case of NIID data. 
 
 - [Federated learning](#federated-learning)
 - [Dataset](#dataset)
@@ -13,7 +13,7 @@ This work is inspired by the intuitive approach used in [Gradient-Masked Federat
 ## Federated learning
 Federated learning (also known as collaborative learning) is a machine learning technique that trains an algorithm across multiple decentralized edge devices or servers holding local data samples, without exchanging them. This approach stands in contrast to traditional centralized machine learning techniques where all the local datasets are uploaded to one server, as well as to more classical decentralized approaches which often assume that local data samples are identically distributed. (Wikipedia) <br>
 
-![FL](FL.png)
+![FL](https://github.com/siddarth-c/FedGMA/blob/main/Extras/FL.png)
 
 <br> FedAvg, or Federated Average, is one of such algorithms introduced by Google in 2017. It is the first ever FL algorithm, and serves as a baseline now for the new methods to beat. For more info on FedAvg, refer to [Communication-Efficient Learning of Deep Networks from Decentralized Data](https://arxiv.org/pdf/1602.05629.pdf). <br>
 FedGMA is an FL algorithm devised by the people at MILA. It uses an AND-Masked gradient update along with parameter averaging to ensure update steps in the direction of the optimal minima across clients. This ensures that the direction of gradient descent is similar to the majority of the participating clients. Find my implementation [here])https://github.com/siddarth-c/FedGMA/blob/main/FedGMA.py)
@@ -23,8 +23,16 @@ The authors of the paper use the [MNIST](http://yann.lecun.com/exdb/mnist/) data
 ](https://arxiv.org/pdf/1907.02893.pdf).
 
 ## Results and Observation
-Multiple models were trained with varying the threshold ∈ [0.5, 0.6, 0.7, 0.8, 0.9]. The test accuracy was calculated at the end of every communication round and is reported below. Note that a probability threshold of 0.7 achieves the maximum accuracy at the end of 50 communication rounds. Indeed the accuracy of 0.7 model is consistantly higher than other models through out the graph. <br><br>
-![Accuracy plot](acc.png)
+Multiple models were trained to test 2 different hyper-parameters, namely the client probability threshold and local client epochs.
+
+### Client Probability Threshold
+The client probability threshold, P ∈ [0.5, 0.6, 0.7, 0.8, 0.9] was tested and compared with the FedAvg model (E = 3). All these were trained for communication rounds = 50 and local client epochs = 3. The test accuracy was calculated at the end of every communication round and is reported below. Note that the model trained with a probability threshold of 0.7 achieves the maximum accuracy in most of the communication rounds. <br><br>
+![Accuracy plot](https://github.com/siddarth-c/FedGMA/blob/main/Extras/Probability.png)
+
+### Local Client Epochs
+The local client epochs, E ∈ [1, 3, 5, 7, 9] was tested and compared with the FedAvg model (E = 3). All these were trained for communication rounds = 50 and client probability threshold = .7. The test accuracy was calculated at the end of every communication round and is reported below. Note that the model trained for local client epochs of 9 achieves the maximum accuracy in most of the communication rounds.<br><br>
+![Accuracy plot](https://github.com/siddarth-c/FedGMA/blob/main/Extras/Epochs.png)
+
 <br><br> Note that there is an initial dip in the performance of all the models before rising. One possible explaination could be the way the model learns. The model could have learnt to classify via 2 different features:
 1. Based on colour - Classiying based on colour would be the easiest. Red-> class 0, Green-> class1. But due to the induced errors, this would not be the ideal solution
 2. Based on integers - Classying the images based on the pixel locations (the integers itself), which is compartively tough, would be the ideal solution <br>
