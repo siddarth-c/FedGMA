@@ -32,18 +32,20 @@ The client probability threshold, P ∈ [0.5, 0.6, 0.7, 0.8, 0.9] was tested and
 ### Local Client Epochs
 The local client epochs, E ∈ [1, 3, 5, 7, 9] was tested and compared with the FedAvg model (E = 3). All these were trained for communication rounds = 50 and client probability threshold = 0.7. The test accuracy was calculated at the end of every communication round and is reported below. Note that the model trained for local client epochs of 9 achieves the maximum accuracy in most of the communication rounds.<br><br>
 ![Accuracy plot](https://github.com/siddarth-c/FedGMA/blob/main/Extras/Epochs.png)
-
-<br>There is an initial dip in the performance of all the models before rising. One possible explaination could be the way the model learns. The model could have learnt to classify via 2 different features:
+<br>
+### The Dip
+Notice, there is an initial dip in the performance of all the models before rising. One possible explaination could be the way the model learns. The model could have learnt to classify via 2 different features:
 1. Based on colour - Classiying based on colour would be the easiest. Red-> class 0, Green-> class1. But due to the induced errors, this would not be the ideal solution
 2. Based on integers - Classying the images based on the pixel locations (the integers itself), which is compartively tough, would be the ideal solution <br>
 
 To speculate, the model could have chosen the easier way at the begininig of classying by colour (local minima), but later realize that this is not the best solution and begins learning it based in the integers itself (global minima). <br>
 
+## Experimental Details
 Following are the hyper-parameters used: <br>
 1. Optimizer: [Adam](https://arxiv.org/abs/1412.6980)
 2. Client learning rate: 0.001
 3. Server learning rate: 0.0001
-<br>
+
 There are a few implementation differences from the paper, optimizers and learning rate to name a few. Though the hyperparameters vary, the core idea is the same. <br> 
 Also the graphs were interpolated for the purpose of visualization.
 <br><br> 
