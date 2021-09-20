@@ -1,6 +1,6 @@
 """
 Name: FedGMA.py
-Aim: A federated learning approach
+Aim: To test the hyper-parameters used in GRADIENT-MASKED FEDERATED OPTIMIZATION
 Author: Siddarth C
 Date: September, 2021
 """
@@ -14,18 +14,33 @@ import matplotlib.pyplot as plt
 import glob
 import warnings
 warnings.filterwarnings("ignore")
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+# Setting random seed for reproducability
+import random
+random.seed(7)
+
 # Use CUDA if available
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+if os.path.exists('Output'):
+    shutil.rmtree('Output')
+    print('Deleted exisitng *Output* folder')
+
+os.mkdir('Output')
+os.mkdir('Output/P')
+os.mkdir('Output/E')
+print('Created *Output* and sub folders')
+
+# Load train data
 trainx = []
 trainy = []
 
-# Load train data
+# Load test data
 for folder in glob.glob('ClientData/*'):
     x = np.load(folder + '/x.npy')
     y = np.load(folder + '/y.npy')
@@ -67,9 +82,10 @@ def GenerateModels():
     """
     client_models = [MNISTtier().to(device) for i in range(100)]
     global_model = MNISTtier().to(device)
+
     return client_models, global_model
 
-def FedAvg(train_x, train_y, test_x, test_y, GD = 'Full'):
+def FedAvg(train_x, train_y, test_x, test_y, GD = 'Full', epochs = 3):
     """
     Performs FedAvg to train a global model
     Args: 
@@ -78,6 +94,7 @@ def FedAvg(train_x, train_y, test_x, test_y, GD = 'Full'):
         test_x: Testing data of shape [#clients, #samples, 28, 28, 3]
         test_y: Testing labels of shape [#clients, #samples]
         GD: Type of gradient Descent: Full(Batch), SGD (Default: 'Full')
+        epochs: Number of local client epochs (Default: 3)
     Returns:
         test_loss: Communication round wise test loss
         test_acc: Communication round wise test accuracy
@@ -93,7 +110,6 @@ def FedAvg(train_x, train_y, test_x, test_y, GD = 'Full'):
         p.data = p.data * 0
         
     comm_rounds = 50
-    epochs = 3
     no_clients = 100
 
     test_loss = []
@@ -145,23 +161,21 @@ def FedAvg(train_x, train_y, test_x, test_y, GD = 'Full'):
         test_loss.append(loss.cpu().detach().numpy())
         test_acc.append(acc.cpu().detach().numpy())
 
-        print('Communication Round:', cr, ' Loss:', np.round(loss.cpu().detach().numpy(), 4), ' Acc:', np.round(acc.cpu().detach().numpy(), 4))
+        if cr % 20 == 0:
+            print('Communication Round:', cr, ' Loss:', np.round(loss.cpu().detach().numpy(), 4), ' Acc:', np.round(acc.cpu().detach().numpy(), 4))
     
     return test_loss, test_acc
 
 FedAvg_loss, FedAvg_acc = FedAvg(trainx, trainy, testx, testy)
 
-if os.path.exists('Output'):
-    shutil.rmtree('Output')
-    print('Deleted exisitng *Output* folder')
 
-os.mkdir('Output')
-print('Created *Output* folder')
+np.save('Output/P/FedAvg_Acc.npy' , np.array(savgol_filter(FedAvg_acc, 9, 4)))
+np.save('Output/P/FedAvg_Loss.npy' , np.array(savgol_filter(FedAvg_loss, 9, 4)))
 
-np.save('Output/FedAvg_Acc.npy' , np.array(savgol_filter(FedAvg_acc, 11, 4)))
-np.save('Output/FedAvg_Loss.npy' , np.array(savgol_filter(FedAvg_loss, 11, 4)))
+np.save('Output/E/FedAvg_Acc_3.npy' , np.array(savgol_filter(FedAvg_acc, 9, 4)))
+np.save('Output/E/FedAvg_Loss_3.npy' , np.array(savgol_filter(FedAvg_loss, 9, 4)))
 
-def FedGMA(train_x, train_y, test_x, test_y, p_thresh = 0.8, GD = 'Full'):
+def FedGMA(train_x, train_y, test_x, test_y, p_thresh = 0.8, GD = 'Full', epochs = 3):
     """
     Performs FedGMA to train a global model
     Args: 
@@ -171,6 +185,7 @@ def FedGMA(train_x, train_y, test_x, test_y, p_thresh = 0.8, GD = 'Full'):
         test_y: Testing labels of shape [#clients, #samples]
         p_thresh: AND mask threshold (default: 0.8)
         GD: Type of gradient Descent: Full(Batch), SGD (Default: 'Full')
+        epochs: Number of local client epochs (Default: 3)
     Returns:
         test_loss: Communication round wise test loss
         test_acc: Communication round wise test accuracy
@@ -179,42 +194,42 @@ def FedGMA(train_x, train_y, test_x, test_y, p_thresh = 0.8, GD = 'Full'):
  
     for client_model in client_models:
             client_model.load_state_dict(global_model.state_dict())
+
     
-    zero_client = MNISTtier().to(device) # A dummy model with all weights set as zero (always)
-    sign_counter = MNISTtier().to(device) # A model to aid in AND MASK operation
+    zero_client = MNISTtier().to(device)
+    sign_counter = MNISTtier().to(device)
     
     for p in zero_client.parameters():
         p.data = p.data * 0
         
     comm_rounds = 50
-    epochs = 3
     no_clients = 100
     server_lr = 0.0001
 
     test_loss = []
     test_acc = []
 
-    for cr in range(comm_rounds): # Communication Rounds
+    for cr in range(comm_rounds):
 
         sign_counter.load_state_dict(zero_client.state_dict())
 
-        for ci in range(no_clients): # Iterate through all clients
+        for ci in range(no_clients):
             
             optimizer = optim.Adam(client_models[ci].parameters(), lr = 0.001)
             criterion = nn.BCEWithLogitsLoss()
             x_600 = train_x[ci]
             y_600 = train_y[ci]
 
-            for e in range(epochs): # Client side epochs
+            for e in range(epochs):
 
-                if GD == 'SGD': # Stochastic Gradient Descent - Very slow
+                if GD == 'SGD':
                     for x, y in zip(x_600, y_600):
                         optimizer.zero_grad()
                         pred = client_models[ci](x.reshape((1, 3, 28, 28)))
                         loss = criterion(pred, y)
                         loss.backward()
                         optimizer.step()
-                else: # Batch Gradient Descent - Faster than SGD
+                else:
                     optimizer.zero_grad()
                     pred = client_models[ci](x_600.reshape((600, 3, 28, 28)))
                     loss = criterion(pred, y_600)
@@ -224,7 +239,6 @@ def FedGMA(train_x, train_y, test_x, test_y, p_thresh = 0.8, GD = 'Full'):
 
         global_model.load_state_dict(zero_client.state_dict()) 
 
-        # Sum of all client's weights + calculate signs of all graidents
         for ind in range(no_clients):
             for p1, p2, p3 in zip(global_model.parameters(), client_models[ind].parameters(), sign_counter.parameters()):
                 p2_grad_sign = torch.sign(p2.grad)
@@ -234,7 +248,7 @@ def FedGMA(train_x, train_y, test_x, test_y, p_thresh = 0.8, GD = 'Full'):
         for p in global_model.parameters():
             p.data = p.data / no_clients
 
-        # AND MASK
+           
         for ind in range(no_clients):
             for p1, p2, p3 in zip(global_model.parameters(), client_models[ind].parameters(), sign_counter.parameters()):
                 p2_mask = 1 * (p2.grad > 0)
@@ -242,13 +256,11 @@ def FedGMA(train_x, train_y, test_x, test_y, p_thresh = 0.8, GD = 'Full'):
                 final_mask = torch.logical_and(torch.logical_not(torch.logical_xor(p2_mask, p3_mask)), 1 * (torch.abs(p3.data) > p_thresh * no_clients))
                 new_grad = p2.grad * final_mask
             
-                p1.data -= server_lr * new_grad/no_clients
-        
-        # Load all clients with server/global model's weights
+                p1.data -= (server_lr * new_grad/no_clients)
+                
         for client_model in client_models:
             client_model.load_state_dict(global_model.state_dict())
         
-        # Test time
         pred = global_model(test_x.reshape((10000, 3, 28, 28)))
         loss = criterion(pred, test_y)
 
@@ -258,53 +270,59 @@ def FedGMA(train_x, train_y, test_x, test_y, p_thresh = 0.8, GD = 'Full'):
         test_loss.append(loss.cpu().detach().numpy())
         test_acc.append(acc.cpu().detach().numpy())
 
-        if cr % 10 == 0:
+
+        if cr % 20 == 0:
             print('Communication Round:', cr, ' Loss:', np.round(loss.cpu().detach().numpy(), 4), ' Acc:', np.round(acc.cpu().detach().numpy(), 4))
         
     return test_loss, test_acc
 
+print('FedGMA - Testing of hyperparmeter - P - Threshold of number of client gradients to be consistent')
 
 for p in np.arange(0.5, 1, 0.1):
-        
-    FedGMA_loss, FedGMA_acc = FedGMA(trainx, trainy, testx, testy, p)
-
-    np.save('Output/FedGMA_Acc' + str(p) + '.npy', np.array(savgol_filter(FedGMA_acc, 11, 4)))
-    np.save('Output/FedGMA_Loss' + str(p) + '.npy', np.array(savgol_filter(FedGMA_loss, 11, 4)))
+    
+    p = np.round(p, 1)
+    FedGMA_loss, FedGMA_acc = FedGMA(trainx, trainy, testx, testy, p_thresh = p)
+    np.save('Output/P/FedGMA_Acc_' + str(p) + '.npy', np.array(savgol_filter(FedGMA_acc, 9, 4)))
+    np.save('Output/P/FedGMA_Loss_' + str(p) + '.npy', np.array(savgol_filter(FedGMA_loss, 9, 4)))
 
     print('Probability threshold', p, 'done \n', '-' * 5)
 
-# # Uncomment to plot the obtained results
-# acc = []
-# acc_names = []
-# loss = []
-# loss_names = []
+print('')
+print('FedGMA - Testing of hyperparmeter - Local Client Epochs')
 
-# for fname in glob.glob('Output/*'):
-#     ar = np.load(fname)
-#     if fname.split('_')[-1][:4] == 'Loss':
-#         loss.append(ar)
-#         loss_names.append(fname.split('/')[-1].split('n')[0][:-1])
-#     else:
-#         acc.append(ar)
-#         acc_names.append(fname.split('/')[-1].split('n')[0][:-1])
+for epochs in [1, 3, 5, 7, 9]:
+    
+    FedGMA_loss, FedGMA_acc = FedGMA(trainx, trainy, testx, testy, p_thresh = 0.7, epochs = epochs)
 
-# plt.rcParams["figure.figsize"] = (10,15)
+    np.save('Output/E/FedGMA_Acc_' + str(epochs) + '.npy', np.array(savgol_filter(FedGMA_acc, 9, 4)))
+    np.save('Output/E/FedGMA_Loss_' + str(epochs) + '.npy', np.array(savgol_filter(FedGMA_loss, 9, 4)))
 
-# for a in acc:
-#     plt.plot(a)
+    print('Local Epochs', epochs, 'done \n', '-' * 5)
 
-# plt.xlabel('Communication Rounds')
-# plt.ylabel('Test Accuracy')
-# plt.legend(acc_names)
-# plt.show()
 
-# plt.rcParams["figure.figsize"] = (10,10)
+acc = []
+acc_names = []
+loss = []
+loss_names = []
 
-# for l in loss:
-#     plt.plot(l)
+hyper_parameter = 'P' # or 'E'
 
-# plt.xlabel('Communication Rounds')
-# plt.ylabel('Test Loss')
-# plt.legend(loss_names)
-# plt.show()
+# Please do modify the following part if the graphs are not plotted
+for fname in glob.glob('Output/' + hyper_parameter + '/*.npy'):
+    ar = np.load(fname)
+    if fname.split('/')[-1].split('_')[1] == 'Loss':
+        loss.append(ar)
+        loss_names.append(fname.split('\\')[-1].split('.npy')[0])
+    else:
+        acc.append(ar)
+        acc_names.append(fname.split('\\')[-1].split('.npy')[0])
 
+plt.rcParams["figure.figsize"] = (15,15)
+
+for a in acc:
+    plt.plot(a)
+
+plt.xlabel('Communication Rounds')
+plt.ylabel('Test Accuracy')
+plt.legend(acc_names)
+plt.show()
