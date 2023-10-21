@@ -1,5 +1,6 @@
 # FedGMA*
 
+[THIS IS NOT THE OFFICIAL IMPLEMENTATION]
 
 This work is inspired by the intuitive approach used in [Gradient-Masked Federated Learning](https://github.com/siddarth-c/FedGMA/blob/main/Extras/GRADIENT-MASKED%20FEDERATED%20OPTIMIZATION.pdf). FedGMA is a modified version of FedAvg that ensures better convergence of server model, especially in the case of NIID data. 
 
